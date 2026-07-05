@@ -38,8 +38,15 @@ void OnRenameButtonPress(MyGUI::WidgetPtr sender)
     Building* building = ou->player->selectedObject.getBuilding();
     if (building)
     {
-        building->setName(newName);
-        DebugLog(("RenameBuildings: Renamed to " + newName).c_str());
+        if (building->isThePlayer())
+        {
+            building->setName(newName);
+            DebugLog(("RenameBuildings: Renamed to " + newName).c_str());
+        }
+        else
+        {
+            DebugLog("RenameBuildings: Building is not player-owned");
+        }
     }
     else
     {
