@@ -4,6 +4,7 @@
 #include <kenshi/Globals.h>
 #include <kenshi/GameWorld.h>
 #include <kenshi/PlayerInterface.h>
+#include <kenshi/Building/Building.h>
 
 #include <mygui/MyGUI_Gui.h>
 #include <mygui/MyGUI_Window.h>
@@ -32,6 +33,17 @@ void OnRenameButtonPress(MyGUI::WidgetPtr sender)
     {
         DebugLog("RenameBuildings: New name is empty");
         return;
+    }
+
+    Building* building = ou->player->selectedObject.getBuilding();
+    if (building)
+    {
+        building->setName(newName);
+        DebugLog(("RenameBuildings: Renamed to " + newName).c_str());
+    }
+    else
+    {
+        DebugLog("RenameBuildings: No building selected");
     }
 }
 
