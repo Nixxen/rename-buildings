@@ -1,0 +1,28 @@
+# Ignore build artifacts
+build/
+*.o
+*.obj
+x64/
+
+
+# Ignore executable files
+*.exe
+*.dll
+
+# Ignore temporary files
+*.tmp
+*.log
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+
+# Ignore system files
+Thumbs.db
+Desktop.ini
+
+# Ignore documentation files
+docs/
+
+# Ignore configuration files
+config/
