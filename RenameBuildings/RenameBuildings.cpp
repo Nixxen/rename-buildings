@@ -18,21 +18,27 @@
 #include <Windows.h>
 
 // Global UI widgets
-MyGUI::Window *g_renameWindow = nullptr;
-MyGUI::Button *g_renameButton = nullptr;
+MyGUI::Window *g_rename_window = nullptr;
+MyGUI::Button *g_rename_button = nullptr;
+bool g_dragging = false;
+int g_drag_start_x = 0;
+int g_drag_start_y = 0;
+int g_button_start_x = 0;
+int g_button_start_y = 0;
 
 // UI callback: attempt to rename the currently selected building
 void OnRenameButtonPress(MyGUI::WidgetPtr sender)
 {
-    MyGUI::EditBox *edit = dynamic_cast<MyGUI::EditBox *>(g_renameWindow->findWidget("RenameBuildingEdit"));
+    MyGUI::EditBox *edit = dynamic_cast<MyGUI::EditBox *>(
+        g_rename_window->findWidget("RenameBuildingEdit"));
     if (!edit)
     {
         DebugLog("Edit box not found");
         return;
     }
 
-    std::string newName = edit->getCaption();
-    if (newName.empty())
+    std::string new_name = edit->getCaption();
+    if (new_name.empty())
     {
         DebugLog("New name is empty");
         return;
@@ -43,9 +49,9 @@ void OnRenameButtonPress(MyGUI::WidgetPtr sender)
     {
         if (building->isThePlayer())
         {
-            building->setName(newName);
-            DebugLog(("Renamed to " + newName).c_str());
-            g_renameWindow->setVisible(false);
+            building->setName(new_name);
+            DebugLog(("Renamed to " + new_name).c_str());
+            g_rename_window->setVisible(false);
         }
         else
         {
@@ -65,34 +71,95 @@ void OnShowRenameWindow(MyGUI::WidgetPtr sender)
     if (building && building->isThePlayer())
     {
         DebugLog("Showing rename window");
-        MyGUI::EditBox *edit = dynamic_cast<MyGUI::EditBox *>(g_renameWindow->findWidget("RenameBuildingEdit"));
+        MyGUI::EditBox *edit = dynamic_cast<MyGUI::EditBox *>(
+            g_rename_window->findWidget("RenameBuildingEdit"));
         if (edit)
         {
             edit->setCaption(building->getName());
         }
-        g_renameWindow->setVisible(true);
+        g_rename_window->setVisible(true);
     }
 }
 
-// Main loop hook: check if a player-owned building is selected and show/hide the rename button
-void (*GameWorld_mainLoop_orig)(GameWorld *thisptr, float time);
-void GameWorld_mainLoop_hook(GameWorld *thisptr, float time)
+// Drag start: record button position and mouse offset at press
+void OnRenameButtonMousePress(
+    MyGUI::WidgetPtr sender, int left, int top, MyGUI::MouseButton id)
 {
-    if (g_renameButton)
+    if (id == MyGUI::MouseButton::Left)
+    {
+        g_dragging = true;
+        MyGUI::IntPoint pos = sender->getPosition();
+        g_button_start_x = pos.left;
+        g_button_start_y = pos.top;
+        g_drag_start_x = left;
+        g_drag_start_y = top;
+    }
+}
+
+// Drag move: reposition button with mouse delta, clamped to screen
+void OnRenameButtonMouseDrag(
+    MyGUI::WidgetPtr sender, int left, int top, MyGUI::MouseButton id)
+{
+    if (g_dragging && id == MyGUI::MouseButton::Left)
+    {
+        int delta_x = left - g_drag_start_x;
+        int delta_y = top - g_drag_start_y;
+        int new_left = g_button_start_x + delta_x;
+        int new_top = g_button_start_y + delta_y;
+
+        // Clamp to parent (screen) edges
+        MyGUI::IntSize parent_size = sender->getParentSize();
+        MyGUI::IntSize button_size = sender->getSize();
+        if (new_left < 0)
+        {
+            new_left = 0;
+        }
+        if (new_top < 0)
+        {
+            new_top = 0;
+        }
+        if (new_left + button_size.width > parent_size.width)
+        {
+            new_left = parent_size.width - button_size.width;
+        }
+        if (new_top + button_size.height > parent_size.height)
+        {
+            new_top = parent_size.height - button_size.height;
+        }
+
+        sender->setPosition(new_left, new_top);
+    }
+}
+
+// Drag end
+void OnRenameButtonMouseRelease(
+    MyGUI::WidgetPtr sender, int left, int top, MyGUI::MouseButton id)
+{
+    if (id == MyGUI::MouseButton::Left)
+    {
+        g_dragging = false;
+    }
+}
+
+// Main loop hook: check if a player-owned building is selected
+void (*GameWorld_main_loop_orig)(GameWorld *thisptr, float time);
+void GameWorld_main_loop_hook(GameWorld *thisptr, float time)
+{
+    if (g_rename_button)
     {
         Building *building = ou->player->selectedObject.getBuilding();
         if (building && building->isThePlayer())
         {
-            g_renameButton->setVisible(true);
+            g_rename_button->setVisible(true);
         }
         else
         {
-            g_renameButton->setVisible(false);
-            g_renameWindow->setVisible(false);
+            g_rename_button->setVisible(false);
+            g_rename_window->setVisible(false);
         }
     }
 
-    GameWorld_mainLoop_orig(thisptr, time);
+    GameWorld_main_loop_orig(thisptr, time);
 }
 
 // Title screen constructor hook
@@ -105,30 +172,50 @@ TitleScreen *TitleScreen_hook(TitleScreen *thisptr)
     MyGUI::Gui *gui = MyGUI::Gui::getInstancePtr();
 
     // Create rename window (hidden initially)
-    g_renameWindow = gui->createWidgetReal<MyGUI::Window>("Kenshi_WindowCX", 0.25f, 0.25f, 0.30f, 0.18f, MyGUI::Align::Center, "Window", "RenameBuildingWindow");
-    g_renameWindow->setCaption("Rename Building");
-    g_renameWindow->setVisible(false);
+    g_rename_window = gui->createWidgetReal<MyGUI::Window>(
+        "Kenshi_WindowCX", 0.25f, 0.25f, 0.30f, 0.18f,
+        MyGUI::Align::Center, "Window", "RenameBuildingWindow");
+    g_rename_window->setCaption("Rename Building");
+    g_rename_window->setVisible(false);
 
-    MyGUI::EditBox *edit = g_renameWindow->getClientWidget()->createWidgetReal<MyGUI::EditBox>("Kenshi_EditBox", 0.05f, 0.15f, 0.6f, 0.7f, MyGUI::Align::Default, "RenameBuildingEdit");
+    MyGUI::EditBox *edit =
+        g_rename_window->getClientWidget()->createWidgetReal<MyGUI::EditBox>(
+            "Kenshi_EditBox", 0.05f, 0.15f, 0.6f, 0.7f,
+            MyGUI::Align::Default, "RenameBuildingEdit");
     edit->setCaption("");
 
-    MyGUI::Button *renameButton = g_renameWindow->getClientWidget()->createWidgetReal<MyGUI::Button>("Kenshi_Button1", 0.68f, 0.15f, 0.27f, 0.7f, MyGUI::Align::Center, "RenameBuildingButton");
-    renameButton->setCaption("Rename");
-    renameButton->eventMouseButtonClick += MyGUI::newDelegate(OnRenameButtonPress);
+    MyGUI::Button *rename_button =
+        g_rename_window->getClientWidget()->createWidgetReal<MyGUI::Button>(
+            "Kenshi_Button1", 0.68f, 0.15f, 0.27f, 0.7f,
+            MyGUI::Align::Center, "RenameBuildingButton");
+    rename_button->setCaption("Rename");
+    rename_button->eventMouseButtonClick += MyGUI::newDelegate(OnRenameButtonPress);
 
     // Create the "Rename" selection button (hidden initially)
     // Positioned near the bottom-right of the screen
-    g_renameButton = gui->createWidgetReal<MyGUI::Button>("Kenshi_Button1", 0.85f, 0.85f, 0.12f, 0.04f, MyGUI::Align::Default, "Window", "ShowRenameBuildingWindowButton");
-    g_renameButton->setCaption("Rename");
-    g_renameButton->setVisible(false);
-    g_renameButton->eventMouseButtonClick += MyGUI::newDelegate(OnShowRenameWindow);
+    g_rename_button = gui->createWidgetReal<MyGUI::Button>(
+        "Kenshi_Button1", 0.85f, 0.85f, 0.12f, 0.04f,
+        MyGUI::Align::Default, "Window", "ShowRenameBuildingWindowButton");
+    g_rename_button->setCaption("Rename");
+    g_rename_button->setVisible(false);
+    g_rename_button->eventMouseButtonClick +=
+        MyGUI::newDelegate(OnShowRenameWindow);
+    g_rename_button->eventMouseButtonPressed +=
+        MyGUI::newDelegate(OnRenameButtonMousePress);
+    g_rename_button->eventMouseDrag +=
+        MyGUI::newDelegate(OnRenameButtonMouseDrag);
+    g_rename_button->eventMouseButtonReleased +=
+        MyGUI::newDelegate(OnRenameButtonMouseRelease);
 
     return titleScreen;
 }
 
 __declspec(dllexport) void startPlugin()
 {
-    if (KenshiLib::SUCCESS != KenshiLib::AddHook(KenshiLib::GetRealAddress(&TitleScreen::_CONSTRUCTOR), TitleScreen_hook, &TitleScreen_orig))
+    if (KenshiLib::SUCCESS !=
+        KenshiLib::AddHook(
+            KenshiLib::GetRealAddress(&TitleScreen::_CONSTRUCTOR),
+            TitleScreen_hook, &TitleScreen_orig))
     {
         ErrorLog("Could not add hook!");
     }
@@ -137,7 +224,11 @@ __declspec(dllexport) void startPlugin()
         DebugLog("Hook installed");
     }
 
-    if (KenshiLib::SUCCESS != KenshiLib::AddHook(KenshiLib::GetRealAddress(&GameWorld::_NV_mainLoop_GPUSensitiveStuff), &GameWorld_mainLoop_hook, &GameWorld_mainLoop_orig))
+    if (KenshiLib::SUCCESS !=
+        KenshiLib::AddHook(
+            KenshiLib::GetRealAddress(
+                &GameWorld::_NV_mainLoop_GPUSensitiveStuff),
+            GameWorld_main_loop_hook, &GameWorld_main_loop_orig))
     {
         ErrorLog("Could not add main loop hook!");
     }
