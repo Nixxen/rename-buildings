@@ -19,7 +19,7 @@
 
 // Global UI widgets
 MyGUI::Window *g_rename_window = nullptr;
-MyGUI::Button *g_rename_button = nullptr;
+MyGUI::Button *g_show_rename_window_button = nullptr;
 bool g_dragging = false;
 int g_drag_start_x = 0;
 int g_drag_start_y = 0;
@@ -157,16 +157,16 @@ void OnRenameButtonMouseRelease(
 void (*GameWorld_main_loop_orig)(GameWorld *thisptr, float time);
 void GameWorld_main_loop_hook(GameWorld *thisptr, float time)
 {
-    if (g_rename_button)
+    if (g_show_rename_window_button)
     {
         Building *building = ou->player->selectedObject.getBuilding();
         if (building && building->isThePlayer())
         {
-            g_rename_button->setVisible(true);
+            g_show_rename_window_button->setVisible(true);
         }
         else
         {
-            g_rename_button->setVisible(false);
+            g_show_rename_window_button->setVisible(false);
             g_rename_window->setVisible(false);
         }
     }
@@ -185,7 +185,7 @@ TitleScreen *TitleScreen_hook(TitleScreen *thisptr)
 
     // Create rename window (hidden initially)
     g_rename_window = gui->createWidgetReal<MyGUI::Window>(
-        "Kenshi_WindowCX", 0.25f, 0.25f, 0.30f, 0.18f,
+        "Kenshi_WindowCX", 0.25f, 0.35f, 0.30f, 0.072f,
         MyGUI::Align::Center, "Window", "RenameBuildingWindow");
     g_rename_window->setCaption("Rename Building");
     g_rename_window->setVisible(false);
@@ -194,31 +194,31 @@ TitleScreen *TitleScreen_hook(TitleScreen *thisptr)
 
     MyGUI::EditBox *edit =
         g_rename_window->getClientWidget()->createWidgetReal<MyGUI::EditBox>(
-            "Kenshi_EditBox", 0.05f, 0.15f, 0.6f, 0.7f,
+            "Kenshi_EditBox", 0.05f, 0.1f, 0.68f, 0.7f,
             MyGUI::Align::Default, "RenameBuildingEdit");
     edit->setCaption("");
 
-    MyGUI::Button *rename_button =
+    MyGUI::Button *confirm_rename_button =
         g_rename_window->getClientWidget()->createWidgetReal<MyGUI::Button>(
-            "Kenshi_Button1", 0.68f, 0.15f, 0.27f, 0.7f,
-            MyGUI::Align::Center, "RenameBuildingButton");
-    rename_button->setCaption("Rename");
-    rename_button->eventMouseButtonClick += MyGUI::newDelegate(OnRenameButtonPress);
+            "Kenshi_Button1", 0.75f, 0.1f, 0.19f, 0.7f,
+            MyGUI::Align::Center, "ConfirmRenameBuildingButton");
+    confirm_rename_button->setCaption("Rename");
+    confirm_rename_button->eventMouseButtonClick += MyGUI::newDelegate(OnRenameButtonPress);
 
     // Create the "Rename" selection button (hidden initially)
-    // Positioned near the bottom-right of the screen
-    g_rename_button = gui->createWidgetReal<MyGUI::Button>(
-        "Kenshi_Button1", 0.85f, 0.85f, 0.12f, 0.04f,
+    // Shows the main rename window when clicked, and can be dragged around the screen
+    g_show_rename_window_button = gui->createWidgetReal<MyGUI::Button>(
+        "Kenshi_Button1", 0.01f, 0.75f, 0.06f, 0.02f,
         MyGUI::Align::Default, "Window", "ShowRenameBuildingWindowButton");
-    g_rename_button->setCaption("Rename");
-    g_rename_button->setVisible(false);
-    g_rename_button->eventMouseButtonClick +=
+    g_show_rename_window_button->setCaption("Rename");
+    g_show_rename_window_button->setVisible(false);
+    g_show_rename_window_button->eventMouseButtonClick +=
         MyGUI::newDelegate(OnShowRenameWindow);
-    g_rename_button->eventMouseButtonPressed +=
+    g_show_rename_window_button->eventMouseButtonPressed +=
         MyGUI::newDelegate(OnRenameButtonMousePress);
-    g_rename_button->eventMouseDrag +=
+    g_show_rename_window_button->eventMouseDrag +=
         MyGUI::newDelegate(OnRenameButtonMouseDrag);
-    g_rename_button->eventMouseButtonReleased +=
+    g_show_rename_window_button->eventMouseButtonReleased +=
         MyGUI::newDelegate(OnRenameButtonMouseRelease);
 
     return titleScreen;
