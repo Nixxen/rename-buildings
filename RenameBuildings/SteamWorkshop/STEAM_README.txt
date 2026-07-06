@@ -23,7 +23,7 @@ Rename Buildings adds a small, draggable "Rename" button that appears when you s
 [*][b]Draggable[/b] - Reposition the button by dragging it. It stays clamped to screen edges so it cannot be moved off-screen.
 [*][b]Toggle behavior[/b] - Clicking the "Rename" button while the window is already open closes it.
 [*][b]Ownership check[/b] - Only buildings owned by the player can be renamed. The rename action itself also verifies ownership.
-[*][b]Persistent through saves[/b] - Renamed buildings keep their new name and the rename button keeps its position when saving and loading.
+[*][b]Persistent through saves[/b] - Renamed buildings keep their new name when saving and loading.
 [/list]
 
 [b]Compatibility[/b]
@@ -36,4 +36,6 @@ Rename Buildings adds a small, draggable "Rename" button that appears when you s
 [list]
 [*]Confirm RE_Kenshi is installed and enabled
 [*]If the button does not appear, verify you have selected a building you own
+[*]If the window does not disappear when clicking "Rename", you most likely have a blank/invalid name. Pure whitespace is not allowed
+[*]If the building did not update its name after the window closed, click on any other building or character to trigger the actual rename
 [/list]
