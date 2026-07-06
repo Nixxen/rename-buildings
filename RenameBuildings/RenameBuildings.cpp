@@ -38,9 +38,20 @@ void OnRenameButtonPress(MyGUI::WidgetPtr sender)
     }
 
     std::string new_name = edit->getCaption();
+    // Trim whitespace from both ends
+    size_t start = new_name.find_first_not_of(" \t\r\n");
+    size_t end = new_name.find_last_not_of(" \t\r\n");
+    if (start == std::string::npos)
+    {
+        new_name.clear();
+    }
+    else
+    {
+        new_name = new_name.substr(start, end - start + 1);
+    }
     if (new_name.empty())
     {
-        DebugLog("New name is empty");
+        DebugLog("New name is empty or whitespace only");
         return;
     }
 
