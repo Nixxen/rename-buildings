@@ -64,9 +64,21 @@ void OnRenameButtonPress(MyGUI::WidgetPtr sender)
     }
 }
 
+void OnCloseRenameWindow(MyGUI::Window *sender, const std::string &name)
+{
+    g_rename_window->setVisible(false);
+}
+
 // UI callback: show the rename window, pre-filled with current building name
+// If the window is already visible, close it instead
 void OnShowRenameWindow(MyGUI::WidgetPtr sender)
 {
+    if (g_rename_window->getVisible())
+    {
+        g_rename_window->setVisible(false);
+        return;
+    }
+
     Building *building = ou->player->selectedObject.getBuilding();
     if (building && building->isThePlayer())
     {
@@ -177,6 +189,8 @@ TitleScreen *TitleScreen_hook(TitleScreen *thisptr)
         MyGUI::Align::Center, "Window", "RenameBuildingWindow");
     g_rename_window->setCaption("Rename Building");
     g_rename_window->setVisible(false);
+    g_rename_window->eventWindowButtonPressed +=
+        MyGUI::newDelegate(OnCloseRenameWindow);
 
     MyGUI::EditBox *edit =
         g_rename_window->getClientWidget()->createWidgetReal<MyGUI::EditBox>(
