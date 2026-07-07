@@ -1,7 +1,11 @@
 # RenameBuildings
 
-A Kenshi mod that lets you rename any player-owned building.
-That includes workstations, which was the intended purpose of this mod. As a bonus, it also works for any other building you own.
+A Kenshi mod that lets you rename most player-owned buildings.
+That includes workstations, which was the intended purpose of this mod. As a bonus, it also works for other buildings you own, as long as they have no doors.
+
+Get it from your preferred modding platform:
+- **Steam Workshop**: [RenameBuildings](https://steamcommunity.com/sharedfiles/filedetails/?id=3759303115)
+- **NexusMods**: [RenameBuildings](https://www.nexusmods.com/kenshi/mods/2031)
 
 ## Features
 
@@ -10,13 +14,7 @@ That includes workstations, which was the intended purpose of this mod. As a bon
 - **Ownership check** - Only buildings owned by the player can be renamed.
 - **Persistent through saves** - Renamed buildings keep their new name when saving and loading.
 
-## How to use
 
-1. Select a player-owned building (e.g., a Storm House, Research Bench, etc.).
-2. Click the "Rename" button on the left side of the screen to open the rename window.
-3. Type in the new name in the edit box.
-4. Click "Rename" to confirm, or click the X to cancel.
-5. To reposition the "Rename" button, simply drag it to where you want it.
 
 ## Building from source
 
