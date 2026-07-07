@@ -61,6 +61,7 @@ void OnRenameButtonPress(MyGUI::WidgetPtr sender)
         if (building->isThePlayer())
         {
             building->setName(new_name);
+            building->notifyChange();
             DebugLog(("Renamed to " + new_name).c_str());
             g_rename_window->setVisible(false);
         }
@@ -91,7 +92,8 @@ void OnShowRenameWindow(MyGUI::WidgetPtr sender)
     }
 
     Building *building = ou->player->selectedObject.getBuilding();
-    if (building && building->isThePlayer())
+    if (building && building->isThePlayer() &&
+        building->getBuildingClass() != BCTYPE_DOOR)
     {
         DebugLog("Showing rename window");
         MyGUI::EditBox *edit = dynamic_cast<MyGUI::EditBox *>(
@@ -171,7 +173,8 @@ void GameWorld_main_loop_hook(GameWorld *thisptr, float time)
     if (g_show_rename_window_button)
     {
         Building *building = ou->player->selectedObject.getBuilding();
-        if (building && building->isThePlayer())
+        if (building && building->isThePlayer() &&
+            building->getBuildingClass() != BCTYPE_DOOR)
         {
             g_show_rename_window_button->setVisible(true);
         }
