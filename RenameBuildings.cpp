@@ -17,6 +17,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+static const bool kVerboseDebugLogging = true;
+
 // Global UI widgets
 MyGUI::Window *gRenameWindow = nullptr;
 MyGUI::Button *gShowRenameWindowButton = nullptr;
@@ -136,6 +138,211 @@ void OnRenameButtonMouseRelease(MyGUI::WidgetPtr sender, int left, int top, MyGU
     if (mouseButtonId == MyGUI::MouseButton::Left) { gDragging = false; }
 }
 
+static const char *BuildingClassTypeName(BuildingClassType type)
+{
+    switch (type)
+    {
+    case BCTYPE_FLUFF:
+        return "BCTYPE_FLUFF";
+    case BCTYPE_DOOR:
+        return "BCTYPE_DOOR";
+    case BCTYPE_USABLE:
+        return "BCTYPE_USABLE";
+    case BCTYPE_STORAGE:
+        return "BCTYPE_STORAGE";
+    case BCTYPE_PRODUCTION:
+        return "BCTYPE_PRODUCTION";
+    case BCTYPE_RESEARCH:
+        return "BCTYPE_RESEARCH";
+    case BCTYPE_CRAFTING:
+        return "BCTYPE_CRAFTING";
+    case BCTYPE_GATEWAY:
+        return "BCTYPE_GATEWAY";
+    case BCTYPE_TURRET:
+        return "BCTYPE_TURRET";
+    case BCTYPE_WALL:
+        return "BCTYPE_WALL";
+    case BCTYPE_ITEM_FURNACE:
+        return "BCTYPE_ITEM_FURNACE";
+    case BCTYPE_LIGHT:
+        return "BCTYPE_LIGHT";
+    case BCTYPE_SHELL_WITH_INTERIOR:
+        return "BCTYPE_SHELL_WITH_INTERIOR";
+    case BCTYPE_FARM:
+        return "BCTYPE_FARM";
+    default:
+        return "BCTYPE_UNKNOWN";
+    }
+}
+
+static const char *BuildingDesignationName(BuildingDesignation designation)
+{
+    switch (designation)
+    {
+    case BD_NONE:
+        return "BD_NONE";
+    case BD_SHOP:
+        return "BD_SHOP";
+    case BD_BARRACKS:
+        return "BD_BARRACKS";
+    case BD_BAR:
+        return "BD_BAR";
+    case BD_HOSPITAL:
+        return "BD_HOSPITAL";
+    case BD_ARMOURY:
+        return "BD_ARMOURY";
+    case BD_TREASURE:
+        return "BD_TREASURE";
+    case BD_PRISON:
+        return "BD_PRISON";
+    case BD_HQ:
+        return "BD_HQ";
+    case BD_RESIDENTIAL:
+        return "BD_RESIDENTIAL";
+    case BD_SLAVE_STORAGE:
+        return "BD_SLAVE_STORAGE";
+    case BD_RESIDENTIAL_SMALL:
+        return "BD_RESIDENTIAL_SMALL";
+    default:
+        return "BD_UNKNOWN";
+    }
+}
+
+// Dumps verbose building info to the debug log
+static void DumpBuildingInfo(Building *building)
+{
+    std::stringstream ss;
+    ss << "=== Building Dump ===";
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    // Pointer
+    ss << "  ptr: " << building;
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    // Display name + data string ID
+    ss << "  displayName: \"" << building->getName() << "\"";
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    if (building->data != nullptr)
+    {
+        ss << "  data->name: \"" << building->data->name << "\"";
+        DebugLog(ss.str().c_str());
+        ss.str("");
+
+        ss << "  data->stringID: \"" << building->data->stringID << "\"";
+        DebugLog(ss.str().c_str());
+        ss.str("");
+
+        ss << "  data->id: " << building->data->id;
+        DebugLog(ss.str().c_str());
+        ss.str("");
+    }
+    else
+    {
+        DebugLog("  data: nullptr");
+    }
+
+    // Class type and designation
+    ss << "  buildingClass: " << BuildingClassTypeName(building->getBuildingClass());
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    ss << "  designation: " << BuildingDesignationName(building->getBuildingDesignation());
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    // Boolean flags
+    ss << "  isThePlayer: " << (building->isThePlayer() ? "true" : "false");
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    ss << "  isSign: " << (building->isSign() ? "true" : "false");
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    ss << "  isForSale: " << (building->isForSale() ? "true" : "false");
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    ss << "  isDoor: " << (building->isDoor() ? "true" : "false");
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    ss << "  isFoliage: " << (building->isFoliage ? "true" : "false");
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    ss << "  destroyed: " << (building->destroyed ? "true" : "false");
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    ss << "  imADoor: " << (building->imADoor ? "true" : "false");
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    // Door parent building (if this is a door)
+    if (building->isDoor() || building->imADoor)
+    {
+        Building *parent = building->doorParentBuilding();
+        if (parent != nullptr)
+        {
+            ss << "   doorParent: ptr=" << parent << " name=\"" << parent->getName()
+               << "\" class=" << BuildingClassTypeName(parent->getBuildingClass()) << " data=\""
+               << (parent->data != nullptr ? parent->data->stringID : "nullptr") << "\"";
+            DebugLog(ss.str().c_str());
+            ss.str("");
+        }
+        else
+        {
+            DebugLog("   doorParent: nullptr");
+        }
+    }
+
+    // Position
+    ss << "  pos: (" << building->pos.x << ", " << building->pos.y << ", " << building->pos.z << ")";
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    // Handle info
+    ss << "  handle.index: " << building->handle.index;
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    ss << "  handle.serial: " << building->handle.serial;
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    ss << "  handle.type: " << static_cast<int>(building->handle.type);
+    DebugLog(ss.str().c_str());
+    ss.str("");
+
+    // Construction state
+    Building::ConstructionState *buildState = building->getBuildState();
+    if (buildState != nullptr)
+    {
+        ss << "  buildState: " << buildState;
+        DebugLog(ss.str().c_str());
+        ss.str("");
+
+        ss << "  buildState->isComplete: " << (buildState->isComplete ? "true" : "false");
+        DebugLog(ss.str().c_str());
+        ss.str("");
+
+        ss << "  buildState->constructionProgress: " << buildState->constructionProgress;
+        DebugLog(ss.str().c_str());
+        ss.str("");
+    }
+    else
+    {
+        DebugLog("  buildState: nullptr");
+    }
+
+    DebugLog("=== End Building Dump ===");
+}
+
 // Main loop hook: check if a player-owned building is selected
 void (*GameWorld_mainLoop_orig)(GameWorld *thisptr, float time);
 void GameWorld_mainLoop_hook(GameWorld *thisptr, float time)
@@ -143,6 +350,15 @@ void GameWorld_mainLoop_hook(GameWorld *thisptr, float time)
     if (gShowRenameWindowButton != nullptr)
     {
         Building *building = ou->player->selectedObject.getBuilding();
+
+        // Verbose debug: dump building info on new selection (any ownership, any class)
+        if (kVerboseDebugLogging)
+        {
+            static Building *sPreviousBuilding = nullptr;
+            if (building != nullptr && building != sPreviousBuilding) { DumpBuildingInfo(building); }
+            sPreviousBuilding = building;
+        }
+
         if (building != nullptr && building->isThePlayer() && building->getBuildingClass() != BCTYPE_DOOR)
         {
             gShowRenameWindowButton->setVisible(true);
