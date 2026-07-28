@@ -17,7 +17,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-static const bool kVerboseDebugLogging = true;
+// Set to true to enable verbose on-click building debug dumps for any building.
+static const bool kVerboseDebugLogging = false;
 
 // Global UI widgets
 MyGUI::Window *gRenameWindow = nullptr;
@@ -27,6 +28,15 @@ int gDragStartX = 0;
 int gDragStartY = 0;
 int gButtonStartX = 0;
 int gButtonStartY = 0;
+
+// Resolves a door building to its parent building for renaming.
+// Returns the parent if the building is a door, otherwise the building itself.
+static Building *GetRenameTarget(Building *building)
+{
+    if (building == nullptr) { return nullptr; }
+    if (building->isDoor() || building->imADoor) { return building->doorParentBuilding(); }
+    return building;
+}
 
 // UI callback: attempt to rename the currently selected building
 void OnRenameButtonPress(MyGUI::WidgetPtr sender)
@@ -53,7 +63,7 @@ void OnRenameButtonPress(MyGUI::WidgetPtr sender)
         return;
     }
 
-    Building *building = ou->player->selectedObject.getBuilding();
+    Building *building = GetRenameTarget(ou->player->selectedObject.getBuilding());
     if (building != nullptr)
     {
         if (building->isThePlayer())
@@ -86,8 +96,8 @@ void OnShowRenameWindow(MyGUI::WidgetPtr sender)
         return;
     }
 
-    Building *building = ou->player->selectedObject.getBuilding();
-    if (building != nullptr && building->isThePlayer() && building->getBuildingClass() != BCTYPE_DOOR)
+    Building *building = GetRenameTarget(ou->player->selectedObject.getBuilding());
+    if (building != nullptr && building->isThePlayer())
     {
         DebugLog("Showing rename window");
         auto *edit = dynamic_cast<MyGUI::EditBox *>(gRenameWindow->findWidget("RenameBuildingEdit"));
@@ -359,10 +369,7 @@ void GameWorld_mainLoop_hook(GameWorld *thisptr, float time)
             sPreviousBuilding = building;
         }
 
-        if (building != nullptr && building->isThePlayer() && building->getBuildingClass() != BCTYPE_DOOR)
-        {
-            gShowRenameWindowButton->setVisible(true);
-        }
+        if (building != nullptr && building->isThePlayer()) { gShowRenameWindowButton->setVisible(true); }
         else
         {
             gShowRenameWindowButton->setVisible(false);
