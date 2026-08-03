@@ -1,6 +1,7 @@
 #include <Debug.h>
 
 #include <kenshi/Building/Building.h>
+#include <kenshi/Faction.h>
 #include <kenshi/GameWorld.h>
 #include <kenshi/Globals.h>
 #include <kenshi/PlayerInterface.h>
@@ -20,6 +21,33 @@
 // Set to true to enable verbose on-click building debug dumps for any building.
 static const bool kVerboseDebugLogging = false;
 
+// Per-class rename permissions. One bool per BuildingClassType.
+// TODO: Move to user configuration (checkboxes) in a future release.
+static bool gClassRenameable[BCTYPE_FARM + 1] = {
+    false, // BCTYPE_FLUFF
+    false, // BCTYPE_DOOR
+    true,  // BCTYPE_USABLE
+    true,  // BCTYPE_STORAGE
+    true,  // BCTYPE_PRODUCTION
+    true,  // BCTYPE_RESEARCH
+    true,  // BCTYPE_CRAFTING
+    false, // BCTYPE_GATEWAY
+    false, // BCTYPE_TURRET
+    false, // BCTYPE_WALL
+    false, // BCTYPE_ITEM_FURNACE
+    false, // BCTYPE_LIGHT
+    true,  // BCTYPE_SHELL_WITH_INTERIOR
+    true   // BCTYPE_FARM
+};
+
+// When true, the player-ownership check (isThePlayer()) is skipped.
+// TODO: Move to user configuration in a future release.
+static bool gOverrideOwnershipCheck = false;
+
+// When true, enables debug hotkeys (Ctrl+T).
+// TODO: Move to user configuration in a future release.
+static bool gDeveloperDebug = true;
+
 // Global UI widgets
 MyGUI::Window *gRenameWindow = nullptr;
 MyGUI::Button *gShowRenameWindowButton = nullptr;
@@ -29,6 +57,9 @@ int gDragStartY = 0;
 int gButtonStartX = 0;
 int gButtonStartY = 0;
 
+// Ctrl+T debug hotkey edge-detection state
+static bool gCtrlTPressedLast = false;
+
 // Resolves a door building to its parent building for renaming.
 // Returns the parent if the building is a door, otherwise the building itself.
 static Building *GetRenameTarget(Building *building)
@@ -36,6 +67,21 @@ static Building *GetRenameTarget(Building *building)
     if (building == nullptr) { return nullptr; }
     if (building->isDoor() || building->imADoor) { return building->doorParentBuilding(); }
     return building;
+}
+
+// Validates whether a building is eligible for renaming.
+// Checks: non-null, class type in the renameable list, and (unless overridden) player ownership.
+static bool IsValidBuildingRename(Building *building)
+{
+    if (building == nullptr) { return false; }
+
+    BuildingClassType buildingClass = building->getBuildingClass();
+    if (buildingClass < 0 || buildingClass > BCTYPE_FARM) { return false; }
+    if (!gClassRenameable[buildingClass]) { return false; }
+
+    if (!gOverrideOwnershipCheck && !building->isThePlayer()) { return false; }
+
+    return true;
 }
 
 // UI callback: attempt to rename the currently selected building
@@ -64,24 +110,16 @@ void OnRenameButtonPress(MyGUI::WidgetPtr sender)
     }
 
     Building *building = GetRenameTarget(ou->player->selectedObject.getBuilding());
-    if (building != nullptr)
+    if (!IsValidBuildingRename(building))
     {
-        if (building->isThePlayer())
-        {
-            building->setName(newName);
-            building->notifyChange();
-            DebugLog(("Renamed to " + newName).c_str());
-            gRenameWindow->setVisible(false);
-        }
-        else
-        {
-            DebugLog("Building is not player-owned");
-        }
+        DebugLog("Building is not valid for renaming");
+        return;
     }
-    else
-    {
-        DebugLog("No building selected");
-    }
+
+    building->setName(newName);
+    building->notifyChange();
+    DebugLog(("Renamed to " + newName).c_str());
+    gRenameWindow->setVisible(false);
 }
 
 void OnCloseRenameWindow(MyGUI::Window *sender, const std::string &name) { gRenameWindow->setVisible(false); }
@@ -97,7 +135,7 @@ void OnShowRenameWindow(MyGUI::WidgetPtr sender)
     }
 
     Building *building = GetRenameTarget(ou->player->selectedObject.getBuilding());
-    if (building != nullptr && building->isThePlayer())
+    if (building != nullptr && IsValidBuildingRename(building))
     {
         DebugLog("Showing rename window");
         auto *edit = dynamic_cast<MyGUI::EditBox *>(gRenameWindow->findWidget("RenameBuildingEdit"));
@@ -145,6 +183,7 @@ void OnRenameButtonMouseDrag(MyGUI::WidgetPtr sender, int left, int top, MyGUI::
 // Drag end
 void OnRenameButtonMouseRelease(MyGUI::WidgetPtr sender, int left, int top, MyGUI::MouseButton mouseButtonId)
 {
+    // TODO: Store the new button position in a config file for persistence across sessions
     if (mouseButtonId == MyGUI::MouseButton::Left) { gDragging = false; }
 }
 
@@ -221,34 +260,34 @@ static const char *BuildingDesignationName(BuildingDesignation designation)
 // Dumps verbose building info to the debug log
 static void DumpBuildingInfo(Building *building)
 {
-    std::stringstream ss;
-    ss << "=== Building Dump ===";
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    std::ostringstream oss;
+    oss << "=== Building Dump ===";
+    DebugLog(oss.str());
+    oss.str("");
 
     // Pointer
-    ss << "  ptr: " << building;
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  ptr: " << building;
+    DebugLog(oss.str());
+    oss.str("");
 
     // Display name + data string ID
-    ss << "  displayName: \"" << building->getName() << "\"";
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  displayName: \"" << building->getName() << "\"";
+    DebugLog(oss.str());
+    oss.str("");
 
     if (building->data != nullptr)
     {
-        ss << "  data->name: \"" << building->data->name << "\"";
-        DebugLog(ss.str().c_str());
-        ss.str("");
+        oss << "  data->name: \"" << building->data->name << "\"";
+        DebugLog(oss.str());
+        oss.str("");
 
-        ss << "  data->stringID: \"" << building->data->stringID << "\"";
-        DebugLog(ss.str().c_str());
-        ss.str("");
+        oss << "  data->stringID: \"" << building->data->stringID << "\"";
+        DebugLog(oss.str());
+        oss.str("");
 
-        ss << "  data->id: " << building->data->id;
-        DebugLog(ss.str().c_str());
-        ss.str("");
+        oss << "  data->id: " << building->data->id;
+        DebugLog(oss.str());
+        oss.str("");
     }
     else
     {
@@ -256,42 +295,42 @@ static void DumpBuildingInfo(Building *building)
     }
 
     // Class type and designation
-    ss << "  buildingClass: " << BuildingClassTypeName(building->getBuildingClass());
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  buildingClass: " << BuildingClassTypeName(building->getBuildingClass());
+    DebugLog(oss.str());
+    oss.str("");
 
-    ss << "  designation: " << BuildingDesignationName(building->getBuildingDesignation());
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  designation: " << BuildingDesignationName(building->getBuildingDesignation());
+    DebugLog(oss.str());
+    oss.str("");
 
     // Boolean flags
-    ss << "  isThePlayer: " << (building->isThePlayer() ? "true" : "false");
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  isThePlayer: " << (building->isThePlayer() ? "true" : "false");
+    DebugLog(oss.str());
+    oss.str("");
 
-    ss << "  isSign: " << (building->isSign() ? "true" : "false");
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  isSign: " << (building->isSign() ? "true" : "false");
+    DebugLog(oss.str());
+    oss.str("");
 
-    ss << "  isForSale: " << (building->isForSale() ? "true" : "false");
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  isForSale: " << (building->isForSale() ? "true" : "false");
+    DebugLog(oss.str());
+    oss.str("");
 
-    ss << "  isDoor: " << (building->isDoor() ? "true" : "false");
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  isDoor: " << (building->isDoor() ? "true" : "false");
+    DebugLog(oss.str());
+    oss.str("");
 
-    ss << "  isFoliage: " << (building->isFoliage ? "true" : "false");
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  isFoliage: " << (building->isFoliage ? "true" : "false");
+    DebugLog(oss.str());
+    oss.str("");
 
-    ss << "  destroyed: " << (building->destroyed ? "true" : "false");
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  destroyed: " << (building->destroyed ? "true" : "false");
+    DebugLog(oss.str());
+    oss.str("");
 
-    ss << "  imADoor: " << (building->imADoor ? "true" : "false");
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  imADoor: " << (building->imADoor ? "true" : "false");
+    DebugLog(oss.str());
+    oss.str("");
 
     // Door parent building (if this is a door)
     if (building->isDoor() || building->imADoor)
@@ -299,11 +338,11 @@ static void DumpBuildingInfo(Building *building)
         Building *parent = building->doorParentBuilding();
         if (parent != nullptr)
         {
-            ss << "   doorParent: ptr=" << parent << " name=\"" << parent->getName()
-               << "\" class=" << BuildingClassTypeName(parent->getBuildingClass()) << " data=\""
-               << (parent->data != nullptr ? parent->data->stringID : "nullptr") << "\"";
-            DebugLog(ss.str().c_str());
-            ss.str("");
+            oss << "   doorParent: ptr=" << parent << " name=\"" << parent->getName()
+                << "\" class=" << BuildingClassTypeName(parent->getBuildingClass()) << " data=\""
+                << (parent->data != nullptr ? parent->data->stringID : "nullptr") << "\"";
+            DebugLog(oss.str());
+            oss.str("");
         }
         else
         {
@@ -312,38 +351,38 @@ static void DumpBuildingInfo(Building *building)
     }
 
     // Position
-    ss << "  pos: (" << building->pos.x << ", " << building->pos.y << ", " << building->pos.z << ")";
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  pos: (" << building->pos.x << ", " << building->pos.y << ", " << building->pos.z << ")";
+    DebugLog(oss.str());
+    oss.str("");
 
     // Handle info
-    ss << "  handle.index: " << building->handle.index;
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  handle.index: " << building->handle.index;
+    DebugLog(oss.str());
+    oss.str("");
 
-    ss << "  handle.serial: " << building->handle.serial;
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  handle.serial: " << building->handle.serial;
+    DebugLog(oss.str());
+    oss.str("");
 
-    ss << "  handle.type: " << static_cast<int>(building->handle.type);
-    DebugLog(ss.str().c_str());
-    ss.str("");
+    oss << "  handle.type: " << static_cast<int>(building->handle.type);
+    DebugLog(oss.str());
+    oss.str("");
 
     // Construction state
     Building::ConstructionState *buildState = building->getBuildState();
     if (buildState != nullptr)
     {
-        ss << "  buildState: " << buildState;
-        DebugLog(ss.str().c_str());
-        ss.str("");
+        oss << "  buildState: " << buildState;
+        DebugLog(oss.str());
+        oss.str("");
 
-        ss << "  buildState->isComplete: " << (buildState->isComplete ? "true" : "false");
-        DebugLog(ss.str().c_str());
-        ss.str("");
+        oss << "  buildState->isComplete: " << (buildState->isComplete ? "true" : "false");
+        DebugLog(oss.str());
+        oss.str("");
 
-        ss << "  buildState->constructionProgress: " << buildState->constructionProgress;
-        DebugLog(ss.str().c_str());
-        ss.str("");
+        oss << "  buildState->constructionProgress: " << buildState->constructionProgress;
+        DebugLog(oss.str());
+        oss.str("");
     }
     else
     {
@@ -351,6 +390,33 @@ static void DumpBuildingInfo(Building *building)
     }
 
     DebugLog("=== End Building Dump ===");
+}
+
+// Checks debug hotkeys and dispatches actions on rising edge
+static void CheckDebugHotkeys()
+{
+    if (!gDeveloperDebug) { return; }
+
+    static const int kKeyStatePressed = 0x8000;
+
+    bool ctrlDown = (GetAsyncKeyState(VK_CONTROL) & kKeyStatePressed) != 0;
+    bool tKeyDown = (GetAsyncKeyState('T') & kKeyStatePressed) != 0;
+    bool ctrlT = ctrlDown && tKeyDown;
+
+    if (ctrlT && !gCtrlTPressedLast)
+    {
+        Building *building = ou->player->selectedObject.getBuilding();
+        if (building != nullptr)
+        {
+            DebugLog("Ctrl+T pressed: dumping building info for selected building");
+            DumpBuildingInfo(GetRenameTarget(building));
+        }
+        else
+        {
+            DebugLog("No building selected");
+        }
+    }
+    gCtrlTPressedLast = ctrlT;
 }
 
 // Main loop hook: check if a player-owned building is selected
@@ -369,13 +435,15 @@ void GameWorld_mainLoop_hook(GameWorld *thisptr, float time)
             sPreviousBuilding = building;
         }
 
-        if (building != nullptr && building->isThePlayer()) { gShowRenameWindowButton->setVisible(true); }
+        if (IsValidBuildingRename(building)) { gShowRenameWindowButton->setVisible(true); }
         else
         {
             gShowRenameWindowButton->setVisible(false);
             gRenameWindow->setVisible(false);
         }
     }
+
+    CheckDebugHotkeys();
 
     GameWorld_mainLoop_orig(thisptr, time);
 }
