@@ -27,12 +27,15 @@
 static const char *kPluginName = "Rename Buildings";
 static const char *kConfigFileName = "mod-config.json";
 
+static const float kDefaultButtonX = 0.01F;
+static const float kDefaultButtonY = 0.75F;
+
 static RenameBuildingsConfig gConfig = {
-    true,  // enabled
-    0.01f, // buttonX
-    0.75f, // buttonY
-    false, // allowRenamingNonPlayerBuildings
-    false, // allowSelectiveRenames
+    true,            // enabled
+    kDefaultButtonX, // buttonX
+    kDefaultButtonY, // buttonY
+    false,           // allowRenamingNonPlayerBuildings
+    false,           // allowSelectiveRenames
     {
         true, // BCTYPE_FLUFF
         true, // BCTYPE_DOOR
@@ -157,7 +160,11 @@ void OnCloseRenameWindow(MyGUI::Window *sender, const std::string &name) { gRena
 void OnShowRenameWindow(MyGUI::WidgetPtr sender)
 {
     // Consume the first click after a drag
-    if (gWasDragged) { gWasDragged = false; return; }
+    if (gWasDragged)
+    {
+        gWasDragged = false;
+        return;
+    }
 
     if (gRenameWindow->getVisible())
     {
@@ -459,9 +466,6 @@ static void ApplySelectiveRenames()
 
 static void LoadConfigState()
 {
-    static const float kDefaultButtonX = 0.01F; // Clamped between 0.0 and (1.0 - button width)
-    static const float kDefaultButtonY = 0.75F; // Clamped between 0.0 and (1.0 - button height)
-
     gConfigNeedsWriteBack = false;
     gConfig.enabled = true;
     gConfig.buttonX = kDefaultButtonX;
