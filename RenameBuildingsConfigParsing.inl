@@ -7,7 +7,7 @@
 
 static void SkipJsonWhitespace(const std::string &text, size_t *pos)
 {
-    if (!pos) { return; }
+    if (pos == nullptr) { return; }
 
     while (*pos < text.size() && std::isspace(static_cast<unsigned char>(text[*pos])) != 0)
     {
@@ -15,12 +15,12 @@ static void SkipJsonWhitespace(const std::string &text, size_t *pos)
     }
 }
 
-static bool IsJsonLiteralTerminator(char c)
-{ return std::isspace(static_cast<unsigned char>(c)) != 0 || c == ',' || c == '}' || c == ']'; }
+static bool IsJsonLiteralTerminator(char currentCharacter)
+{ return std::isspace(static_cast<unsigned char>(currentCharacter)) != 0 || currentCharacter == ',' || currentCharacter == '}' || currentCharacter == ']'; }
 
 static void SkipUtf8Bom(const std::string &text, size_t *pos)
 {
-    if (!pos || *pos != 0 || text.size() < 3) { return; }
+    if (pos == nullptr || *pos != 0 || text.size() < 3) { return; }
 
     const auto b0 = static_cast<unsigned char>(text[0]);
     const auto b1 = static_cast<unsigned char>(text[1]);
@@ -30,7 +30,7 @@ static void SkipUtf8Bom(const std::string &text, size_t *pos)
 
 static bool RecordConfigSyntaxError(RenameBuildingsConfigParseDiagnostics *diagnostics, size_t offset)
 {
-    if (diagnostics)
+    if (diagnostics != nullptr)
     {
         diagnostics->syntaxError = true;
         diagnostics->syntaxErrorOffset = offset;
@@ -40,7 +40,7 @@ static bool RecordConfigSyntaxError(RenameBuildingsConfigParseDiagnostics *diagn
 
 static bool ParseJsonStringToken(const std::string &text, size_t *pos, std::string *valueOut)
 {
-    if (!pos || !valueOut) { return false; }
+    if (pos == nullptr || valueOut == nullptr) { return false; }
 
     SkipJsonWhitespace(text, pos);
     if (*pos >= text.size() || text[*pos] != '"') { return false; }
@@ -50,14 +50,14 @@ static bool ParseJsonStringToken(const std::string &text, size_t *pos, std::stri
 
     while (*pos < text.size())
     {
-        const char c = text[*pos];
-        if (c == '"')
+        const char currentCharacter = text[*pos];
+        if (currentCharacter == '"')
         {
             ++(*pos);
             return true;
         }
 
-        if (c == '\\')
+        if (currentCharacter == '\\')
         {
             ++(*pos);
             if (*pos >= text.size()) { return false; }
@@ -66,7 +66,7 @@ static bool ParseJsonStringToken(const std::string &text, size_t *pos, std::stri
             continue;
         }
 
-        valueOut->push_back(c);
+        valueOut->push_back(currentCharacter);
         ++(*pos);
     }
 
@@ -75,7 +75,7 @@ static bool ParseJsonStringToken(const std::string &text, size_t *pos, std::stri
 
 static bool ParseJsonBoolValue(const std::string &text, size_t *pos, bool *valueOut)
 {
-    if (!pos || !valueOut) { return false; }
+    if (pos == nullptr || valueOut == nullptr) { return false; }
 
     SkipJsonWhitespace(text, pos);
 
@@ -106,7 +106,7 @@ static bool ParseJsonBoolValue(const std::string &text, size_t *pos, bool *value
 
 static bool ParseJsonFloatValue(const std::string &text, size_t *pos, float *valueOut)
 {
-    if (!pos || !valueOut) { return false; }
+    if (pos == nullptr || valueOut == nullptr) { return false; }
 
     SkipJsonWhitespace(text, pos);
     size_t cursor = *pos;
@@ -140,7 +140,7 @@ static bool SkipJsonValue(const std::string &text, size_t *pos);
 
 static bool SkipJsonObject(const std::string &text, size_t *pos)
 {
-    if (!pos || *pos >= text.size() || text[*pos] != '{') { return false; }
+    if (pos == nullptr || *pos >= text.size() || text[*pos] != '{') { return false; }
 
     ++(*pos);
     SkipJsonWhitespace(text, pos);
@@ -184,7 +184,7 @@ static bool SkipJsonObject(const std::string &text, size_t *pos)
 
 static bool SkipJsonArray(const std::string &text, size_t *pos)
 {
-    if (!pos || *pos >= text.size() || text[*pos] != '[') { return false; }
+    if (pos == nullptr || *pos >= text.size() || text[*pos] != '[') { return false; }
 
     ++(*pos);
     SkipJsonWhitespace(text, pos);
@@ -221,22 +221,22 @@ static bool SkipJsonArray(const std::string &text, size_t *pos)
 
 static bool SkipJsonValue(const std::string &text, size_t *pos)
 {
-    if (!pos) { return false; }
+    if (pos == nullptr) { return false; }
 
     SkipJsonWhitespace(text, pos);
     if (*pos >= text.size()) { return false; }
 
-    const char c = text[*pos];
-    if (c == '"')
+    const char currentCharacter = text[*pos];
+    if (currentCharacter == '"')
     {
         std::string ignored;
         return ParseJsonStringToken(text, pos, &ignored);
     }
 
-    if (c == '{') { return SkipJsonObject(text, pos); }
-    if (c == '[') { return SkipJsonArray(text, pos); }
+    if (currentCharacter == '{') { return SkipJsonObject(text, pos); }
+    if (currentCharacter == '[') { return SkipJsonArray(text, pos); }
 
-    if (c == '-' || std::isdigit(static_cast<unsigned char>(c)) != 0)
+    if (currentCharacter == '-' || std::isdigit(static_cast<unsigned char>(currentCharacter)) != 0)
     {
         size_t cursor = *pos;
         if (text[cursor] == '-') { ++cursor; }
@@ -301,7 +301,7 @@ static bool SkipJsonValue(const std::string &text, size_t *pos)
 
 static void ResetConfigParseDiagnostics(RenameBuildingsConfigParseDiagnostics *diagnostics)
 {
-    if (!diagnostics) { return; }
+    if (diagnostics == nullptr) { return; }
 
     diagnostics->foundEnabled = false;
     diagnostics->invalidEnabled = false;
@@ -366,7 +366,7 @@ static bool ParseConfigBool(const std::string &body, size_t *pos, bool *found, b
 static bool ParseConfigFloat(const std::string &body, size_t *pos, bool *found, bool *invalid, float *valueOut)
 {
     size_t valuePos = *pos;
-    float parsed = 0.0f;
+    float parsed = 0.0F;
     if (ParseJsonFloatValue(body, &valuePos, &parsed))
     {
         *found = true;
@@ -383,7 +383,7 @@ static bool ParseConfigJson(
     const std::string &body, RenameBuildingsConfig *configOut, RenameBuildingsConfigParseDiagnostics *diagnostics
 )
 {
-    if (!configOut || !diagnostics) { return false; }
+    if (configOut == nullptr || diagnostics == nullptr) { return false; }
 
     size_t pos = 0;
     SkipUtf8Bom(body, &pos);
@@ -574,28 +574,27 @@ static bool ReadConfigFromFile(
     const std::string &configPath, RenameBuildingsConfig *configOut, bool *foundFileOut, bool *needsWriteBackOut
 )
 {
-    if (!configOut) { return false; }
+    if (configOut == nullptr) { return false; }
 
-    if (foundFileOut) { *foundFileOut = false; }
-    if (needsWriteBackOut) { *needsWriteBackOut = false; }
+    if (foundFileOut != nullptr) { *foundFileOut = false; }
+    if (needsWriteBackOut != nullptr) { *needsWriteBackOut = false; }
 
-    std::ifstream in(configPath.c_str(), std::ios::in | std::ios::binary);
-    if (!in)
+    std::ifstream configInputStream(configPath.c_str(), std::ios::in | std::ios::binary);
+    if (!configInputStream)
     {
-        if (needsWriteBackOut) { *needsWriteBackOut = true; }
+        if (needsWriteBackOut != nullptr) { *needsWriteBackOut = true; }
         return true;
     }
 
-    if (foundFileOut) { *foundFileOut = true; }
+    if (foundFileOut != nullptr) { *foundFileOut = true; }
 
-    const std::string body((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    const std::string body((std::istreambuf_iterator<char>(configInputStream)), std::istreambuf_iterator<char>());
     RenameBuildingsConfigParseDiagnostics diagnostics;
     ResetConfigParseDiagnostics(&diagnostics);
     if (!ParseConfigJson(body, configOut, &diagnostics))
     {
         std::stringstream error;
-        error << "RenameBuildings ERROR: mod-config.json parse error near byte offset "
-              << diagnostics.syntaxErrorOffset;
+        error << "ERROR: mod-config.json parse error near byte offset " << diagnostics.syntaxErrorOffset;
         ErrorLog(error.str().c_str());
         return false;
     }
@@ -630,39 +629,39 @@ static bool ReadConfigFromFile(
     if (!diagnostics.foundVerboseDebugLogging || diagnostics.invalidVerboseDebugLogging) { needsWriteBack = true; }
     if (!diagnostics.foundDeveloperDebug || diagnostics.invalidDeveloperDebug) { needsWriteBack = true; }
 
-    if (needsWriteBackOut) { *needsWriteBackOut = needsWriteBack; }
+    if (needsWriteBackOut != nullptr) { *needsWriteBackOut = needsWriteBack; }
     return true;
 }
 
 static bool SaveConfigToFile(const std::string &configPath, const RenameBuildingsConfig &config)
 {
-    std::ofstream out(configPath.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
-    if (!out) { return false; }
+    std::ofstream configOutputStream(configPath.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+    if (!configOutputStream) { return false; }
 
-    out << "{\n";
-    out << "  \"enabled\": " << (config.enabled ? "true" : "false") << ",\n";
-    out << "  \"buttonX\": " << config.buttonX << ",\n";
-    out << "  \"buttonY\": " << config.buttonY << ",\n";
-    out << "  \"allowRenamingNonPlayerBuildings\": " << (config.allowRenamingNonPlayerBuildings ? "true" : "false")
+    configOutputStream << "{\n";
+    configOutputStream << "  \"enabled\": " << (config.enabled ? "true" : "false") << ",\n";
+    configOutputStream << "  \"buttonX\": " << config.buttonX << ",\n";
+    configOutputStream << "  \"buttonY\": " << config.buttonY << ",\n";
+    configOutputStream << "  \"allowRenamingNonPlayerBuildings\": " << (config.allowRenamingNonPlayerBuildings ? "true" : "false")
         << ",\n";
-    out << "  \"allowSelectiveRenames\": " << (config.allowSelectiveRenames ? "true" : "false") << ",\n";
-    out << "  \"allowFluff\": " << (config.classRenameable[BCTYPE_FLUFF] ? "true" : "false") << ",\n";
-    out << "  \"allowUsable\": " << (config.classRenameable[BCTYPE_USABLE] ? "true" : "false") << ",\n";
-    out << "  \"allowStorage\": " << (config.classRenameable[BCTYPE_STORAGE] ? "true" : "false") << ",\n";
-    out << "  \"allowProduction\": " << (config.classRenameable[BCTYPE_PRODUCTION] ? "true" : "false") << ",\n";
-    out << "  \"allowResearch\": " << (config.classRenameable[BCTYPE_RESEARCH] ? "true" : "false") << ",\n";
-    out << "  \"allowCrafting\": " << (config.classRenameable[BCTYPE_CRAFTING] ? "true" : "false") << ",\n";
-    out << "  \"allowGateway\": " << (config.classRenameable[BCTYPE_GATEWAY] ? "true" : "false") << ",\n";
-    out << "  \"allowTurret\": " << (config.classRenameable[BCTYPE_TURRET] ? "true" : "false") << ",\n";
-    out << "  \"allowWall\": " << (config.classRenameable[BCTYPE_WALL] ? "true" : "false") << ",\n";
-    out << "  \"allowItemFurnace\": " << (config.classRenameable[BCTYPE_ITEM_FURNACE] ? "true" : "false") << ",\n";
-    out << "  \"allowLight\": " << (config.classRenameable[BCTYPE_LIGHT] ? "true" : "false") << ",\n";
-    out << "  \"allowShellWithInterior\": " << (config.classRenameable[BCTYPE_SHELL_WITH_INTERIOR] ? "true" : "false")
+    configOutputStream << "  \"allowSelectiveRenames\": " << (config.allowSelectiveRenames ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowFluff\": " << (config.classRenameable[BCTYPE_FLUFF] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowUsable\": " << (config.classRenameable[BCTYPE_USABLE] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowStorage\": " << (config.classRenameable[BCTYPE_STORAGE] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowProduction\": " << (config.classRenameable[BCTYPE_PRODUCTION] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowResearch\": " << (config.classRenameable[BCTYPE_RESEARCH] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowCrafting\": " << (config.classRenameable[BCTYPE_CRAFTING] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowGateway\": " << (config.classRenameable[BCTYPE_GATEWAY] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowTurret\": " << (config.classRenameable[BCTYPE_TURRET] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowWall\": " << (config.classRenameable[BCTYPE_WALL] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowItemFurnace\": " << (config.classRenameable[BCTYPE_ITEM_FURNACE] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowLight\": " << (config.classRenameable[BCTYPE_LIGHT] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowShellWithInterior\": " << (config.classRenameable[BCTYPE_SHELL_WITH_INTERIOR] ? "true" : "false")
         << ",\n";
-    out << "  \"allowFarm\": " << (config.classRenameable[BCTYPE_FARM] ? "true" : "false") << ",\n";
-    out << "  \"verboseDebugLogging\": " << (config.verboseDebugLogging ? "true" : "false") << ",\n";
-    out << "  \"developerDebug\": " << (config.developerDebug ? "true" : "false") << "\n";
-    out << "}\n";
+    configOutputStream << "  \"allowFarm\": " << (config.classRenameable[BCTYPE_FARM] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"verboseDebugLogging\": " << (config.verboseDebugLogging ? "true" : "false") << ",\n";
+    configOutputStream << "  \"developerDebug\": " << (config.developerDebug ? "true" : "false") << "\n";
+    configOutputStream << "}\n";
 
     return true;
 }
