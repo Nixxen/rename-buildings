@@ -68,6 +68,9 @@ int gButtonStartY = 0;
 // Ctrl+T debug hotkey edge-detection state
 static bool gCtrlTPressedLast = false;
 
+// Prevents the rename window from opening on the first click after a drag
+static bool gWasDragged = false;
+
 // Resolve config file path from the DLL location (runs before startPlugin)
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
 {
@@ -153,6 +156,9 @@ void OnCloseRenameWindow(MyGUI::Window *sender, const std::string &name) { gRena
 // If the window is already visible, close it instead
 void OnShowRenameWindow(MyGUI::WidgetPtr sender)
 {
+    // Consume the first click after a drag
+    if (gWasDragged) { gWasDragged = false; return; }
+
     if (gRenameWindow->getVisible())
     {
         gRenameWindow->setVisible(false);
@@ -188,6 +194,8 @@ void OnRenameButtonMouseDrag(MyGUI::WidgetPtr sender, int left, int top, MyGUI::
 {
     if (gDragging && mouseButtonId == MyGUI::MouseButton::Left)
     {
+        gWasDragged = true;
+
         int deltaX = left - gDragStartX;
         int deltaY = top - gDragStartY;
         int newLeft = gButtonStartX + deltaX;
