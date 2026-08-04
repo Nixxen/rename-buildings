@@ -205,11 +205,25 @@ void OnRenameButtonMouseDrag(MyGUI::WidgetPtr sender, int left, int top, MyGUI::
     }
 }
 
+static bool SaveConfigState();
+
 // Drag end
 void OnRenameButtonMouseRelease(MyGUI::WidgetPtr sender, int left, int top, MyGUI::MouseButton mouseButtonId)
 {
-    // TODO: Store the new button position in a config file for persistence across sessions
-    if (mouseButtonId == MyGUI::MouseButton::Left) { gDragging = false; }
+    if (mouseButtonId == MyGUI::MouseButton::Left)
+    {
+        gDragging = false;
+
+        // Persist button position as normalized coordinates (0.0-1.0) to config
+        MyGUI::IntPoint pos = sender->getPosition();
+        MyGUI::IntSize parentSize = sender->getParentSize();
+        if (parentSize.width > 0 && parentSize.height > 0)
+        {
+            gConfig.buttonX = static_cast<float>(pos.left) / static_cast<float>(parentSize.width);
+            gConfig.buttonY = static_cast<float>(pos.top) / static_cast<float>(parentSize.height);
+            SaveConfigState();
+        }
+    }
 }
 
 static const char *BuildingClassTypeName(BuildingClassType type)
@@ -564,22 +578,22 @@ TitleScreen *TitleScreen_hook(TitleScreen *thisptr)
 
     MyGUI::Gui *gui = MyGUI::Gui::getInstancePtr();
 
-    float kRenameWindowX = 0.25F;
-    float kRenameWindowY = 0.35F;
-    float kRenameWindowWidth = 0.30F;
-    float kRenameWindowHeight = 0.072F;
-    float kEditBoxX = 0.05F;
-    float kEditBoxY = 0.10F;
-    float kEditBoxWidth = 0.68F;
-    float kEditBoxHeight = 0.70F;
-    float kConfirmButtonX = 0.75F;
-    float kConfirmButtonY = 0.10F;
-    float kConfirmButtonWidth = 0.19F;
-    float kConfirmButtonHeight = 0.70F;
-    float kShowButtonX = gConfig.buttonX;
-    float kShowButtonY = gConfig.buttonY;
-    float kShowButtonWidth = 0.06F;
-    float kShowButtonHeight = 0.02F;
+    static const float kRenameWindowX = 0.25F;
+    static const float kRenameWindowY = 0.35F;
+    static const float kRenameWindowWidth = 0.30F;
+    static const float kRenameWindowHeight = 0.072F;
+    static const float kEditBoxX = 0.05F;
+    static const float kEditBoxY = 0.10F;
+    static const float kEditBoxWidth = 0.68F;
+    static const float kEditBoxHeight = 0.70F;
+    static const float kConfirmButtonX = 0.75F;
+    static const float kConfirmButtonY = 0.10F;
+    static const float kConfirmButtonWidth = 0.19F;
+    static const float kConfirmButtonHeight = 0.70F;
+    static const float kShowButtonX = gConfig.buttonX;
+    static const float kShowButtonY = gConfig.buttonY;
+    static const float kShowButtonWidth = 0.06F;
+    static const float kShowButtonHeight = 0.02F;
 
     // Create rename window (hidden initially)
     gRenameWindow = gui->createWidgetReal<MyGUI::Window>(
