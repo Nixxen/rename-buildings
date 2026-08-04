@@ -20,8 +20,10 @@ struct RenameBuildingsConfigParseDiagnostics
     bool invalidEnabled;
     bool foundButtonX;
     bool invalidButtonX;
+    bool clampedButtonX;
     bool foundButtonY;
     bool invalidButtonY;
+    bool clampedButtonY;
     bool foundAllowRenamingNonPlayerBuildings;
     bool invalidAllowRenamingNonPlayerBuildings;
     bool foundAllowSelectiveRenames;

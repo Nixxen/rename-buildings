@@ -16,7 +16,10 @@ static void SkipJsonWhitespace(const std::string &text, size_t *pos)
 }
 
 static bool IsJsonLiteralTerminator(char currentCharacter)
-{ return std::isspace(static_cast<unsigned char>(currentCharacter)) != 0 || currentCharacter == ',' || currentCharacter == '}' || currentCharacter == ']'; }
+{
+    return std::isspace(static_cast<unsigned char>(currentCharacter)) != 0 || currentCharacter == ',' ||
+           currentCharacter == '}' || currentCharacter == ']';
+}
 
 static void SkipUtf8Bom(const std::string &text, size_t *pos)
 {
@@ -307,8 +310,10 @@ static void ResetConfigParseDiagnostics(RenameBuildingsConfigParseDiagnostics *d
     diagnostics->invalidEnabled = false;
     diagnostics->foundButtonX = false;
     diagnostics->invalidButtonX = false;
+    diagnostics->clampedButtonX = false;
     diagnostics->foundButtonY = false;
     diagnostics->invalidButtonY = false;
+    diagnostics->clampedButtonY = false;
     diagnostics->foundAllowRenamingNonPlayerBuildings = false;
     diagnostics->invalidAllowRenamingNonPlayerBuildings = false;
     diagnostics->foundAllowSelectiveRenames = false;
@@ -363,14 +368,35 @@ static bool ParseConfigBool(const std::string &body, size_t *pos, bool *found, b
     return false;
 }
 
-static bool ParseConfigFloat(const std::string &body, size_t *pos, bool *found, bool *invalid, float *valueOut)
+static bool ParseConfigFloatBounded(
+    const std::string &body,
+    size_t *pos,
+    bool *found,
+    bool *invalid,
+    float minValue,
+    float maxValue,
+    float *valueOut,
+    bool *clampedOut
+)
 {
     size_t valuePos = *pos;
     float parsed = 0.0F;
     if (ParseJsonFloatValue(body, &valuePos, &parsed))
     {
         *found = true;
+        bool clamped = false;
+        if (parsed < minValue)
+        {
+            parsed = minValue;
+            clamped = true;
+        }
+        if (parsed > maxValue)
+        {
+            parsed = maxValue;
+            clamped = true;
+        }
         *valueOut = parsed;
+        if (clampedOut != nullptr) { *clampedOut = clamped; }
         *pos = valuePos;
         return true;
     }
@@ -409,17 +435,24 @@ static bool ParseConfigJson(
         if (pos >= body.size() || body[pos] != ':') { return RecordConfigSyntaxError(diagnostics, pos); }
         ++pos;
 
+        static const float kAlmostOutOfBounds = 0.98F; // Clamped between 0.0 and (1.0 - roughly button width / height)
         if (key == "enabled")
         {
             ParseConfigBool(body, &pos, &diagnostics->foundEnabled, &diagnostics->invalidEnabled, &configOut->enabled);
         }
         else if (key == "buttonX")
         {
-            ParseConfigFloat(body, &pos, &diagnostics->foundButtonX, &diagnostics->invalidButtonX, &configOut->buttonX);
+            ParseConfigFloatBounded(
+                body, &pos, &diagnostics->foundButtonX, &diagnostics->invalidButtonX, 0.0F, kAlmostOutOfBounds,
+                &configOut->buttonX, &diagnostics->clampedButtonX
+            );
         }
         else if (key == "buttonY")
         {
-            ParseConfigFloat(body, &pos, &diagnostics->foundButtonY, &diagnostics->invalidButtonY, &configOut->buttonY);
+            ParseConfigFloatBounded(
+                body, &pos, &diagnostics->foundButtonY, &diagnostics->invalidButtonY, 0.0F, kAlmostOutOfBounds,
+                &configOut->buttonY, &diagnostics->clampedButtonY
+            );
         }
         else if (key == "allowRenamingNonPlayerBuildings")
         {
@@ -604,7 +637,9 @@ static bool ReadConfigFromFile(
     // Check each field
     if (!diagnostics.foundEnabled || diagnostics.invalidEnabled) { needsWriteBack = true; }
     if (!diagnostics.foundButtonX || diagnostics.invalidButtonX) { needsWriteBack = true; }
+    if (diagnostics.clampedButtonX) { needsWriteBack = true; }
     if (!diagnostics.foundButtonY || diagnostics.invalidButtonY) { needsWriteBack = true; }
+    if (diagnostics.clampedButtonY) { needsWriteBack = true; }
     if (!diagnostics.foundAllowRenamingNonPlayerBuildings || diagnostics.invalidAllowRenamingNonPlayerBuildings)
     {
         needsWriteBack = true;
@@ -642,22 +677,28 @@ static bool SaveConfigToFile(const std::string &configPath, const RenameBuilding
     configOutputStream << "  \"enabled\": " << (config.enabled ? "true" : "false") << ",\n";
     configOutputStream << "  \"buttonX\": " << config.buttonX << ",\n";
     configOutputStream << "  \"buttonY\": " << config.buttonY << ",\n";
-    configOutputStream << "  \"allowRenamingNonPlayerBuildings\": " << (config.allowRenamingNonPlayerBuildings ? "true" : "false")
-        << ",\n";
+    configOutputStream << "  \"allowRenamingNonPlayerBuildings\": "
+                       << (config.allowRenamingNonPlayerBuildings ? "true" : "false") << ",\n";
     configOutputStream << "  \"allowSelectiveRenames\": " << (config.allowSelectiveRenames ? "true" : "false") << ",\n";
     configOutputStream << "  \"allowFluff\": " << (config.classRenameable[BCTYPE_FLUFF] ? "true" : "false") << ",\n";
     configOutputStream << "  \"allowUsable\": " << (config.classRenameable[BCTYPE_USABLE] ? "true" : "false") << ",\n";
-    configOutputStream << "  \"allowStorage\": " << (config.classRenameable[BCTYPE_STORAGE] ? "true" : "false") << ",\n";
-    configOutputStream << "  \"allowProduction\": " << (config.classRenameable[BCTYPE_PRODUCTION] ? "true" : "false") << ",\n";
-    configOutputStream << "  \"allowResearch\": " << (config.classRenameable[BCTYPE_RESEARCH] ? "true" : "false") << ",\n";
-    configOutputStream << "  \"allowCrafting\": " << (config.classRenameable[BCTYPE_CRAFTING] ? "true" : "false") << ",\n";
-    configOutputStream << "  \"allowGateway\": " << (config.classRenameable[BCTYPE_GATEWAY] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowStorage\": " << (config.classRenameable[BCTYPE_STORAGE] ? "true" : "false")
+                       << ",\n";
+    configOutputStream << "  \"allowProduction\": " << (config.classRenameable[BCTYPE_PRODUCTION] ? "true" : "false")
+                       << ",\n";
+    configOutputStream << "  \"allowResearch\": " << (config.classRenameable[BCTYPE_RESEARCH] ? "true" : "false")
+                       << ",\n";
+    configOutputStream << "  \"allowCrafting\": " << (config.classRenameable[BCTYPE_CRAFTING] ? "true" : "false")
+                       << ",\n";
+    configOutputStream << "  \"allowGateway\": " << (config.classRenameable[BCTYPE_GATEWAY] ? "true" : "false")
+                       << ",\n";
     configOutputStream << "  \"allowTurret\": " << (config.classRenameable[BCTYPE_TURRET] ? "true" : "false") << ",\n";
     configOutputStream << "  \"allowWall\": " << (config.classRenameable[BCTYPE_WALL] ? "true" : "false") << ",\n";
-    configOutputStream << "  \"allowItemFurnace\": " << (config.classRenameable[BCTYPE_ITEM_FURNACE] ? "true" : "false") << ",\n";
+    configOutputStream << "  \"allowItemFurnace\": " << (config.classRenameable[BCTYPE_ITEM_FURNACE] ? "true" : "false")
+                       << ",\n";
     configOutputStream << "  \"allowLight\": " << (config.classRenameable[BCTYPE_LIGHT] ? "true" : "false") << ",\n";
-    configOutputStream << "  \"allowShellWithInterior\": " << (config.classRenameable[BCTYPE_SHELL_WITH_INTERIOR] ? "true" : "false")
-        << ",\n";
+    configOutputStream << "  \"allowShellWithInterior\": "
+                       << (config.classRenameable[BCTYPE_SHELL_WITH_INTERIOR] ? "true" : "false") << ",\n";
     configOutputStream << "  \"allowFarm\": " << (config.classRenameable[BCTYPE_FARM] ? "true" : "false") << ",\n";
     configOutputStream << "  \"verboseDebugLogging\": " << (config.verboseDebugLogging ? "true" : "false") << ",\n";
     configOutputStream << "  \"developerDebug\": " << (config.developerDebug ? "true" : "false") << "\n";
