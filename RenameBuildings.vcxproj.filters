@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RenameBuildings.cpp">
+    <ClCompile Include="src\RenameBuildings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
