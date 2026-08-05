@@ -525,6 +525,11 @@ static bool SaveConfigState()
     return true;
 }
 
+// -----------------------------------------------------------------------
+// Emkej's Mod Core (Mod Hub) integration (inlined)
+// -----------------------------------------------------------------------
+#include "RenameBuildingsModHub.inl"
+
 // Checks debug hotkeys and dispatches actions on rising edge
 static void CheckDebugHotkeys()
 {
@@ -671,4 +676,6 @@ __declspec(dllexport) void startPlugin()
     {
         DebugLog("Main loop hook installed");
     }
+
+    RenameBuildingsModHub_OnStartup();
 }
