@@ -82,10 +82,14 @@
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
+    <PreBuildEvent>
+      <Command>powershell -ExecutionPolicy Bypass -File "$(ProjectDir)scripts\update_version.ps1" -ProjectDir "$(ProjectDir)"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\RenameBuildings.cpp" />
     <ClCompile Include="tools\mod-hub-sdk\src\mod_hub_client.cpp" />
+    <ResourceCompile Include="src\RenameBuildings.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
