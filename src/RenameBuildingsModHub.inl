@@ -177,17 +177,33 @@ EMC_Result __cdecl SetEnabledSetting(void *user_data, int32_t value, char *err_b
 // Per-setting callbacks: float (main)
 // -----------------------------------------------------------------------
 
+void RepositionRenameButton()
+{
+    if (gShowRenameWindowButton != nullptr)
+    {
+        gShowRenameWindowButton->setRealPosition(gConfig.buttonX, gConfig.buttonY);
+    }
+}
+
 EMC_Result __cdecl GetButtonXSetting(void *user_data, float *out_value)
 { return GetHubFloatSetting(user_data, out_value, &RenameBuildingsConfig::buttonX); }
 
 EMC_Result __cdecl SetButtonXSetting(void *user_data, float value, char *err_buf, uint32_t err_buf_size)
-{ return SetHubFloatSetting(user_data, value, err_buf, err_buf_size, &RenameBuildingsConfig::buttonX); }
+{
+    EMC_Result result = SetHubFloatSetting(user_data, value, err_buf, err_buf_size, &RenameBuildingsConfig::buttonX);
+    if (result == EMC_OK) { RepositionRenameButton(); }
+    return result;
+}
 
 EMC_Result __cdecl GetButtonYSetting(void *user_data, float *out_value)
 { return GetHubFloatSetting(user_data, out_value, &RenameBuildingsConfig::buttonY); }
 
 EMC_Result __cdecl SetButtonYSetting(void *user_data, float value, char *err_buf, uint32_t err_buf_size)
-{ return SetHubFloatSetting(user_data, value, err_buf, err_buf_size, &RenameBuildingsConfig::buttonY); }
+{
+    EMC_Result result = SetHubFloatSetting(user_data, value, err_buf, err_buf_size, &RenameBuildingsConfig::buttonY);
+    if (result == EMC_OK) { RepositionRenameButton(); }
+    return result;
+}
 
 // -----------------------------------------------------------------------
 // Per-setting callbacks: bool (advanced)
