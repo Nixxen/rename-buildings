@@ -16,6 +16,7 @@
 #include <core/Functions.h>
 
 #include "RenameBuildingsConfig.h"
+#include "version.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -501,18 +502,18 @@ static void LoadConfigState()
     bool needsWriteBack = false;
     if (!ReadConfigFromFile(gSettingsPath, &gConfig, &foundConfigFile, &needsWriteBack))
     {
-        ErrorLog("RenameBuildings ERROR: failed to read mod-config.json; using defaults and rewriting file");
+        ErrorLog("ERROR: failed to read mod-config.json; using defaults and rewriting file");
         gConfigNeedsWriteBack = true;
         return;
     }
 
     gConfigNeedsWriteBack = (!foundConfigFile) || needsWriteBack;
-    if (!foundConfigFile) { DebugLog("RenameBuildings INFO: mod-config.json not found; using defaults"); }
+    if (!foundConfigFile) { DebugLog("INFO: mod-config.json not found; using defaults"); }
 
     ApplySelectiveRenames();
 
     std::stringstream info;
-    info << "RenameBuildings INFO: loaded config enabled=" << (gConfig.enabled ? "true" : "false") << " settingsPath=\""
+    info << "INFO: loaded config enabled=" << (gConfig.enabled ? "true" : "false") << " settingsPath=\""
          << gSettingsPath << "\""
          << " allowRenamingNonPlayerBuildings=" << (gConfig.allowRenamingNonPlayerBuildings ? "true" : "false")
          << " allowSelectiveRenames=" << (gConfig.allowSelectiveRenames ? "true" : "false")
@@ -525,19 +526,19 @@ static bool SaveConfigState()
 {
     if (gSettingsPath.empty())
     {
-        ErrorLog("RenameBuildings ERROR: settings path is empty; cannot save mod-config.json");
+        ErrorLog("ERROR: settings path is empty; cannot save mod-config.json");
         return false;
     }
 
     if (!SaveConfigToFile(gSettingsPath, gConfig))
     {
         std::stringstream error;
-        error << "RenameBuildings ERROR: failed to save mod-config.json path=\"" << gSettingsPath << "\"";
+        error << "ERROR: failed to save mod-config.json path=\"" << gSettingsPath << "\"";
         ErrorLog(error.str().c_str());
         return false;
     }
 
-    DebugLog("RenameBuildings INFO: saved mod-config.json");
+    DebugLog("INFO: saved mod-config.json");
     return true;
 }
 
@@ -668,6 +669,8 @@ TitleScreen *TitleScreen_hook(TitleScreen *thisptr)
 
 __declspec(dllexport) void startPlugin()
 {
+    DebugLog("v" RB_VERSION_STRING " loaded");
+
     LoadConfigState();
     if (gConfigNeedsWriteBack) { SaveConfigState(); }
 

@@ -1,0 +1,34 @@
+#include <winres.h>
+#include "version.h"
+
+#define STRINGIZE2(x) #x
+#define STRINGIZE(x) STRINGIZE2(x)
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     RB_VERSION_MAJOR, RB_VERSION_MINOR, RB_VERSION_PATCH, RB_VERSION_BUILD
+PRODUCTVERSION  RB_VERSION_MAJOR, RB_VERSION_MINOR, RB_VERSION_PATCH, RB_VERSION_BUILD
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_DLL
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "FileDescription",  "Rename Buildings (RE_Kenshi)"
+            VALUE "FileVersion",      STRINGIZE(RB_VERSION_MAJOR) "." STRINGIZE(RB_VERSION_MINOR) "." STRINGIZE(RB_VERSION_PATCH) "." STRINGIZE(RB_VERSION_BUILD)
+            VALUE "InternalName",     "RenameBuildings"
+            VALUE "OriginalFilename", "RenameBuildings.dll"
+            VALUE "ProductName",      "Rename Buildings"
+            VALUE "ProductVersion",   STRINGIZE(RB_VERSION_MAJOR) "." STRINGIZE(RB_VERSION_MINOR) "." STRINGIZE(RB_VERSION_PATCH) "." STRINGIZE(RB_VERSION_BUILD)
+            VALUE "CompanyName",      "Nixxen"
+            VALUE "LegalCopyright",   "Copyright (c) 2026 Nixxen"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
