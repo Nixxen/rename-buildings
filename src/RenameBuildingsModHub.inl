@@ -477,9 +477,9 @@ void EnsureModHubClientConfigured()
         &gModHubClient,    &GetDeveloperDebugSetting, &SetDeveloperDebugSetting
     };
 
-    static const char *kSectionAdvancedId = "advanced";
-    static const char *kSectionAdvancedLabel = "Advanced";
-    static const char *kSectionDebugId = "debug";
+    static const char *kSectionAdvancedId = "overrides";
+    static const char *kSectionAdvancedLabel = "Overrides";
+    static const char *kSectionDebugId = "advanced";
     static const char *kSectionDebugLabel = "Debug";
 
     static const emc::ModHubClientSettingRowV1 kModHubRows[] = {
