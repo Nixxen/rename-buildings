@@ -589,7 +589,7 @@ void GameWorld_mainLoop_hook(GameWorld *thisptr, float time)
             sPreviousBuilding = building;
         }
 
-        if (IsValidBuildingRename(building)) { gShowRenameWindowButton->setVisible(true); }
+        if (IsValidBuildingRename(GetRenameTarget(building))) { gShowRenameWindowButton->setVisible(true); }
         else
         {
             gShowRenameWindowButton->setVisible(false);
