@@ -20,6 +20,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+#include <cmath>
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
@@ -29,6 +30,7 @@ static const char *kConfigFileName = "mod-config.json";
 
 static const float kDefaultButtonX = 0.01F;
 static const float kDefaultButtonY = 0.75F;
+static const float kMinimumDragDistance = 0.005F;
 
 static RenameBuildingsConfig gConfig = {
     true,            // enabled
@@ -201,8 +203,6 @@ void OnRenameButtonMouseDrag(MyGUI::WidgetPtr sender, int left, int top, MyGUI::
 {
     if (gDragging && mouseButtonId == MyGUI::MouseButton::Left)
     {
-        gWasDragged = true;
-
         int deltaX = left - gDragStartX;
         int deltaY = top - gDragStartY;
         int newLeft = gButtonStartX + deltaX;
@@ -229,15 +229,31 @@ void OnRenameButtonMouseRelease(MyGUI::WidgetPtr sender, int left, int top, MyGU
     {
         gDragging = false;
 
-        // Persist button position as normalized coordinates (0.0-1.0) to config
         MyGUI::IntPoint pos = sender->getPosition();
         MyGUI::IntSize parentSize = sender->getParentSize();
-        if (parentSize.width > 0 && parentSize.height > 0)
+        if (parentSize.width <= 0 || parentSize.height <= 0) { return; }
+
+        float newX = static_cast<float>(pos.left) / static_cast<float>(parentSize.width);
+        float newY = static_cast<float>(pos.top) / static_cast<float>(parentSize.height);
+
+        float deltaX = newX - gConfig.buttonX;
+        float deltaY = newY - gConfig.buttonY;
+        float distance = std::sqrt((deltaX * deltaX) + (deltaY * deltaY));
+
+        if (distance < kMinimumDragDistance)
         {
-            gConfig.buttonX = static_cast<float>(pos.left) / static_cast<float>(parentSize.width);
-            gConfig.buttonY = static_cast<float>(pos.top) / static_cast<float>(parentSize.height);
-            SaveConfigState();
+            // Treat as a click, not a drag: revert to saved position
+            sender->setPosition(
+                static_cast<int>(gConfig.buttonX * static_cast<float>(parentSize.width)),
+                static_cast<int>(gConfig.buttonY * static_cast<float>(parentSize.height))
+            );
+            return;
         }
+
+        gWasDragged = true;
+        gConfig.buttonX = newX;
+        gConfig.buttonY = newY;
+        SaveConfigState();
     }
 }
 
