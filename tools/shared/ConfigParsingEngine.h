@@ -228,6 +228,19 @@ static bool ParseJsonFloatValue(const std::string &text, size_t *pos, float *val
         }
         if (!sawFractionDigit) { return false; }
     }
+    if (cursor < text.size() && (text[cursor] == 'e' || text[cursor] == 'E'))
+    {
+        ++cursor;
+        if (cursor < text.size() && (text[cursor] == '+' || text[cursor] == '-')) { ++cursor; }
+
+        bool sawExponentDigit = false;
+        while (cursor < text.size() && std::isdigit(static_cast<unsigned char>(text[cursor])) != 0)
+        {
+            sawExponentDigit = true;
+            ++cursor;
+        }
+        if (!sawExponentDigit) { return false; }
+    }
     if (cursor < text.size() && !IsJsonLiteralTerminator(text[cursor])) { return false; }
 
     const std::string numberText = text.substr(*pos, cursor - *pos);
