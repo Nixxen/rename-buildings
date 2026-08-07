@@ -12,8 +12,8 @@
 
 namespace
 {
-const char *kHubNamespaceId = "tools";
-const char *kHubNamespaceDisplayName = "Tools";
+const char *kHubNamespaceId = "ui";
+const char *kHubNamespaceDisplayName = "UI";
 const char *kHubModId = "rename_buildings";
 const char *kHubModDisplayName = "Rename Buildings";
 
