@@ -121,7 +121,37 @@ static bool ParseJsonStringToken(const std::string &text, size_t *pos, std::stri
         {
             ++(*pos);
             if (*pos >= text.size()) { return false; }
-            valueOut->push_back(text[*pos]);
+
+            const char escapedCharacter = text[*pos];
+            switch (escapedCharacter)
+            {
+            case '"':
+                valueOut->push_back('"');
+                break;
+            case '\\':
+                valueOut->push_back('\\');
+                break;
+            case '/':
+                valueOut->push_back('/');
+                break;
+            case 'n':
+                valueOut->push_back('\n');
+                break;
+            case 'r':
+                valueOut->push_back('\r');
+                break;
+            case 't':
+                valueOut->push_back('\t');
+                break;
+            case 'b':
+                valueOut->push_back('\b');
+                break;
+            case 'f':
+                valueOut->push_back('\f');
+                break;
+            default:
+                valueOut->push_back(escapedCharacter); // Invalid JSON escape sequence
+            }
             ++(*pos);
             continue;
         }
