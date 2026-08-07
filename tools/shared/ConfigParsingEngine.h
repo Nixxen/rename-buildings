@@ -603,7 +603,7 @@ static bool ParseConfigJsonEngine(
     size_t *syntaxErrorOffset
 )
 {
-    if (configBase == nullptr || fieldCount <= 0) { return false; }
+    if (configBase == nullptr || fields == nullptr || diagFields == nullptr || fieldCount <= 0) { return false; }
 
     size_t pos = 0;
     SkipUtf8Bom(body, &pos);
@@ -741,7 +741,7 @@ static bool ReadConfigFromFileEngine(
     bool *needsWriteBackOut
 )
 {
-    if (configBase == nullptr || fieldCount <= 0) { return false; }
+    if (configBase == nullptr || fields == nullptr || diagFields == nullptr || fieldCount <= 0) { return false; }
 
     if (foundFileOut != nullptr) { *foundFileOut = false; }
     if (needsWriteBackOut != nullptr) { *needsWriteBackOut = false; }
