@@ -407,12 +407,13 @@ void EnsureModHubClientConfigured()
 
     static const float kButtonPositionIncrement = 0.001F;
     builder.AddFloat<&RenameBuildingsConfig::buttonX>(
-        "button_x", "Button X", "Horizontal position of the rename button (0.0-1.0)", 0.0F, 1.0F,
+        "button_x", "Button X", "Horizontal position of the rename button (0.0-0.98)", 0.0F, kAlmostOutOfBounds,
         kButtonPositionIncrement
     );
 
     builder.AddFloat<&RenameBuildingsConfig::buttonY>(
-        "button_y", "Button Y", "Vertical position of the rename button (0.0-1.0)", 0.0F, 1.0F, kButtonPositionIncrement
+        "button_y", "Button Y", "Vertical position of the rename button (0.0-0.98)", 0.0F, kAlmostOutOfBounds,
+        kButtonPositionIncrement
     );
 
     builder.BeginSection(kSectionOverridesId, kSectionOverridesLabel);
