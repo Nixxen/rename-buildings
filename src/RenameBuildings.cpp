@@ -111,7 +111,7 @@ static bool IsValidBuildingRename(Building *building)
 
     BuildingClassType buildingClass = building->getBuildingClass();
     if (buildingClass < 0 || buildingClass > BCTYPE_FARM) { return false; }
-    if (!gConfig.classRenameable[buildingClass]) { return false; }
+    if (gConfig.allowSelectiveRenames && !gConfig.classRenameable[buildingClass]) { return false; }
 
     if (!gConfig.allowRenamingNonPlayerBuildings && !building->isThePlayer()) { return false; }
 
