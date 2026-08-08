@@ -2,10 +2,12 @@
 
 The mod allows you to rename all player-owned buildings in Kenshi. It was designed for renaming workstations (e.g., "Cooking Stove" -> "Cook Dustwich", and "Cooking Stove" -> "Cook Food Cube"), and it should work on other "building" objects as well.
 Rename Buildings adds a small, draggable "Rename" button that appears when you select a player-owned building. Click it to open a compact rename window, type in a new name, and your building is renamed - permanently, even through saves and imports.
+Configurable through a JSON file, or Emkej's Mod Hub (under the UI section).
 
 [b]Requirements[/b]
 [list]
 [*][url=https://www.nexusmods.com/kenshi/mods/847]RE_Kenshi[/url] (tested on v0.34)
+[*][url=https://www.nexusmods.com/kenshi/mods/1885]Emkejs-Mod-Core[/url] (optional, for Mod Hub in-game settings UI; load before Fix Shopping Wages)
 [*]Kenshi v1.0.65+
 [/list]
 
@@ -24,6 +26,7 @@ Rename Buildings adds a small, draggable "Rename" button that appears when you s
 [*][b]Toggle behavior[/b] - Clicking the "Rename" button while the window is already open closes it.
 [*][b]Ownership check[/b] - Only buildings owned by the player can be renamed. The rename action itself also verifies ownership.
 [*][b]Persistent through saves[/b] - Renamed buildings keep their new name when saving and loading.
+[*][b]Configurable[/b] - Supports config through JSON (out of game) or Emkej's Mod Hub (in game). You can now override which buildings you are allowed to rename, allowing you to limit the amount of buildings you can rename. You can also override the player check, so non-player buildings can be renamed.
 [/list]
 
 [b]Limitations[/b]
@@ -47,6 +50,7 @@ Rename Buildings adds a small, draggable "Rename" button that appears when you s
 
 [b]Shout outs[/b]
 [list]
-[*]BFrizzleFoShizzle, the creator of KenshiLib and RE_Kenshi. Without either, this mod would not exist.
+[*][url=https://steamcommunity.com/id/bmanatee]BFrizzleFoShizzle[/url], creator of KenshiLib and RE_Kenshi. Without either, this mod would not exist.
 [*][url=https://steamcommunity.com/id/anarkius]Anarkius[/url], for discovering building shells could be renamed in the game editor, giving me the debug info I needed to allow renaming buildings identifying as doors.
+[*][url=https://steamcommunity.com/profiles/76561198014968620]Emkej[/url], creator of Emkejs-Mod-Core for Mod Hub and in-game settings UI
 [/list]
