@@ -1,6 +1,7 @@
 // -----------------------------------------------------------------------
 // ConfigParsingEngine.h - Table-driven JSON config parser/serializer
-// Copyright (C) 2026  Nixxen / rename-buildings contributors
+// Version: 0.1.0
+// Copyright (C) 2026  Nixxen
 // Partial code derived from Job-B-Gone by Emkej
 //
 // This program is free software: you can redistribute it and/or modify
