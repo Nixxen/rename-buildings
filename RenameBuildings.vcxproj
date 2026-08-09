@@ -83,7 +83,7 @@
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
     <PreBuildEvent>
-      <Command>powershell -ExecutionPolicy Bypass -File "$(ProjectDir)scripts\update_version.ps1" -ProjectDir "$(ProjectDir)"</Command>
+      <Command>powershell -ExecutionPolicy Bypass -File "$(ProjectDir)scripts\update_version.ps1" -VersionPrefix "RB" -ProjectPrefix "RENAME_BUILDINGS" -ProjectDir "$(ProjectDir)"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

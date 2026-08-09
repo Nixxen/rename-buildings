@@ -1,6 +1,11 @@
+# Version: 1.0.0
 param(
     [Parameter(Mandatory = $true)]
-    [string]$ProjectDir
+    [string]$ProjectDir,
+    [Parameter(Mandatory = $true)]
+    [string]$VersionPrefix,
+    [Parameter(Mandatory = $true)]
+    [string]$ProjectPrefix
 )
 
 # MSBuild may pass the directory with trailing quote/backslash artifacts from command-line escaping
@@ -31,22 +36,22 @@ $minor = 0
 $patch = 0
 if (Test-Path $versionH) {
     $vh = Get-Content $versionH -Raw
-    if ($vh -match '#define\s+RB_VERSION_MAJOR\s+(\d+)') { $major = $matches[1] }
-    if ($vh -match '#define\s+RB_VERSION_MINOR\s+(\d+)') { $minor = $matches[1] }
-    if ($vh -match '#define\s+RB_VERSION_PATCH\s+(\d+)') { $patch = $matches[1] }
+    if ($vh -match "#define\s+$([regex]::Escape($VersionPrefix))_VERSION_MAJOR\s+(\d+)") { $major = $matches[1] }
+    if ($vh -match "#define\s+$([regex]::Escape($VersionPrefix))_VERSION_MINOR\s+(\d+)") { $minor = $matches[1] }
+    if ($vh -match "#define\s+$([regex]::Escape($VersionPrefix))_VERSION_PATCH\s+(\d+)") { $patch = $matches[1] }
 }
 
 $versionString = "$major.$minor.$patch.$buildNumber"
 
 # Generate version_build.h (include guard for rc.exe compatibility)
 $header = @"
-#ifndef RENAME_BUILDINGS_VERSION_BUILD_H
-#define RENAME_BUILDINGS_VERSION_BUILD_H
+#ifndef $($ProjectPrefix)_VERSION_BUILD_H
+#define $($ProjectPrefix)_VERSION_BUILD_H
 
-#define RB_VERSION_BUILD $buildNumber // NOLINT(modernize-macro-to-enum)
-#define RB_VERSION_STRING "$versionString"
+#define $($VersionPrefix)_VERSION_BUILD $buildNumber // NOLINT(modernize-macro-to-enum)
+#define $($VersionPrefix)_VERSION_STRING "$versionString"
 
-#endif // RENAME_BUILDINGS_VERSION_BUILD_H
+#endif // $($ProjectPrefix)_VERSION_BUILD_H
 "@
 
 Set-Content -Path $versionBuildHeader -Value $header
