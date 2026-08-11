@@ -53,10 +53,12 @@ The mod is configurable through a JSON file, or Emkej's Mod Hub (under the UI se
 [*]If you have overridden a building type in the JSON configuration, but it does not correctly hide the in-game button, ensure you have also enabled the flag that allows overriding in general. The main flag is required for any of the specific overrides to work.
 [/list]
 
-[b]Check Out My Other Mods[/b]
+[b]Check Out All My Mods[/b]
 [list]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3759303115]Rename Buildings[/url], Lets you rename all player-owned buildings in Kenshi.
 [*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3771008243]Simple Compass[/url], Never lose your bearings in Kenshi again. A compass HUD element showing your current heading in degrees and cardinal direction.
 [*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3775703318]Fix Shopping Wages[/url], gives most NPCs their daily allowance so they keep buying from player shops.
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3781354452]Medic Button Splint Rigging[/url], Adds the "Splint Rigging" job when shift-clicking the medic button.
 [/list]
 
 [b]Shout outs[/b]
